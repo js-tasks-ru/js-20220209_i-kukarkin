@@ -5,16 +5,15 @@
  * @returns {string[]}
  */
 export function sortStrings(arr, param = 'asc') {
-  // Пробовал вставить slice() прямо в return, но почему-то он там не срабатывал
-  const copyArr = arr.slice();
+  const copyArr = [...arr];
     
-  if (param === 'asc') {
-    return copyArr.sort(compareWords);
-  }
-
-  return copyArr.sort(compareWords).reverse();
+  return copyArr.sort((a, b) => compareWords(a, b, param));
 }
 
-const compareWords = (a, b) => {
-  return a.localeCompare(b, ['ru', 'en'], {caseFirst: "upper"});
+const compareWords = (a, b, param) => {
+  if (param === 'asc') {
+    return a.localeCompare(b, ['ru', 'en'], {caseFirst: "upper"});
+  }
+
+  return b.localeCompare(a, ['ru', 'en'], {caseFirst: "upper"});
 };

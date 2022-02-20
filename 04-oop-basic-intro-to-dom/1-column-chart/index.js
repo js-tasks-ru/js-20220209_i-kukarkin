@@ -74,14 +74,14 @@ export default class ColumnChart {
     render () {
       const wrapper = document.createElement('div');
 
+      wrapper.style = `--chart-height: ${this.chartHeight}`;
+
       if (this.data.length) {
         wrapper.className = 'column-chart';
-        wrapper.style = `--chart-height: ${this.chartHeight}`;
 
         wrapper.innerHTML = this.renderData();
       } else {
         wrapper.className = 'column-chart column-chart_loading';
-        wrapper.style = `--chart-height: ${this.chartHeight}`;
 
         wrapper.innerHTML = this.renderPreloader();
       }

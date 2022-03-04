@@ -129,12 +129,6 @@ export default class SortableTable {
 
   remove () {
     if (this.element) {
-      const headers = this.element.querySelectorAll('[data-sortable="true"]');
-
-      for (const header of headers) {
-        header.removeEventListener('click', this.handleHeaderClick);
-      }
-
       this.element.remove();
     }
   }
@@ -158,7 +152,7 @@ export default class SortableTable {
     const headers = element.querySelectorAll('[data-sortable="true"]');
 
     for (const header of headers) {
-      header.addEventListener('click', this.handleHeaderClick, true);
+      header.addEventListener('pointerdown', this.handleHeaderClick, true);
     }
   }
 }

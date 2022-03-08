@@ -101,15 +101,19 @@ export default class SortableTable {
   }
 
   getData = async ({sort = '', order = 'asc', start = 0, end = ELEMENTS_PER_PAGE} = {}) => {
-    const query = new URLSearchParams();
-    query.append('_sort', sort);
-    query.append('_order', order);
-    query.append('_start', start);
-    query.append('_end', end);
+    try {
+      const query = new URLSearchParams();
+      query.append('_sort', sort);
+      query.append('_order', order);
+      query.append('_start', start);
+      query.append('_end', end);
 
-    const resp = await fetchJson(`${BACKEND_URL}/${this.url}?${query.toString()}`);
+      const resp = await fetchJson(`${BACKEND_URL}/${this.url}?${query.toString()}`);
 
-    return resp;
+      return resp;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   sortOnClient = (id, order) => {

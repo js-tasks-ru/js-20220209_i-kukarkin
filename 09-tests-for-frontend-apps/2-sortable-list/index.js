@@ -36,11 +36,8 @@ export default class SortableList {
 
       this.dragElement = event.target.closest('.sortable-list__item');
 
-      console.log(event.clientX);
-      console.log(event.clientY);
-
       const shiftX = event.clientX - (this.dragElement.getBoundingClientRect().left - this.element.getBoundingClientRect().left);
-      const shiftY = event.clientY - (this.dragElement.getBoundingClientRect().top - this.element.getBoundingClientRect().top);
+      const shiftY = window.scrollY + event.clientY - (this.dragElement.getBoundingClientRect().top - this.element.getBoundingClientRect().top);
 
       this.placeholderElement.style.width = `${this.dragElement.offsetWidth}px`;
       this.placeholderElement.style.height = `${this.dragElement.offsetHeight}px`;
@@ -122,6 +119,7 @@ export default class SortableList {
       this.placeholderElement = placeholder;
 
       this.element.addEventListener('pointerdown', this.handleMouseDown);
+      this.element.addEventListener('ondragstart', this.handleDragStart);
     }
 
     remove () {

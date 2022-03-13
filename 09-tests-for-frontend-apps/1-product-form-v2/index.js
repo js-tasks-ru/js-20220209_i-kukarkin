@@ -1,4 +1,4 @@
-import SortableList from '../2-sortable-list/index.js';
+import SortableList from '../../2-sortable-list/index.js';
 import escapeHtml from './utils/escape-html.js';
 import fetchJson from './utils/fetch-json.js';
 
@@ -58,9 +58,7 @@ export default class ProductForm {
       <label class="form-label">Категория</label>
       <select class="form-control" id="subcategory" name="subcategory">
       ${categories.map(elem => {
-    return (`
-      <option value="${elem.id}" ${elem.id === this.product.subcategory && 'selected'}>${elem.label}</option>
-        `);
+    return (new Option(elem.label, elem.id, elem.id === this.product.subcategory).outerHTML);
   }).join('')}
         </select>
       </div>

@@ -9,16 +9,13 @@ const BACKEND_URL = 'https://course-js.javascript.ru/';
 
 export default class Page {
   element
-  sortableTable
-  ordersChart
-  salesChart
-  customersChart
+  components = {}
   subElements = {}
   initialDate = {}
 
   constructor () {
     const prevDate = new Date();
-    prevDate.setDate(prevDate.getDate() - 7);
+    prevDate.setDate(prevDate.getDate() - 30);
 
     this.initialDate = {
       from: prevDate,
@@ -26,19 +23,10 @@ export default class Page {
     };
   }
 
-  renderRangePicker () {
+  initComponents () {
     const {from, to} = this.initialDate;
 
     const rangePicker = new RangePicker({ from, to });
-
-    this.subElements.rangePicker = rangePicker.element;
-
-    return rangePicker.element;
-  }
-
-  renderCharts () {
-    const {from, to} = this.initialDate;
-    const wrapper = document.createElement('div');
 
     const ordersChart = new ColumnChart({
       url: 'api/dashboard/orders',
@@ -60,95 +48,98 @@ export default class Page {
       label: 'Клиенты',
     });
 
-    wrapper.append(ordersChart.element);
-    wrapper.append(salesChart.element);
-    wrapper.append(customersChart.element);
-
-    this.ordersChart = ordersChart;
-    this.salesChart = salesChart;
-    this.customersChart = customersChart;
-
-    this.subElements.ordersChart = ordersChart.element;
-    this.subElements.salesChart = salesChart.element;
-    this.subElements.customersChart = customersChart.element;
-
-    return wrapper.childNodes;
-  }
-
-  renderTable () {
-    const {from, to} = this.initialDate;
-
-    const table = new SortableTable(header, {
-      url: `api/dashboard/bestsellers?from=${from.toISOString()}&to=${to.toISOString()}`
+    const sortableTable = new SortableTable(header, {
+      url: `api/dashboard/bestsellers?from=${from.toISOString()}&to=${to.toISOString()}`,
+      isSortLocally: true
     });
 
-    this.sortableTable = table;
-    this.subElements.sortableTable = table.element;
-
-    return table.element;
+    this.components = {
+      rangePicker,
+      ordersChart,
+      salesChart,
+      customersChart,
+      sortableTable
+    };
   }
 
-  async renderDashboard () {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'dashboard full-height flex-column';
+  get template () {
+    return `<div class="dashboard">
+      <div class="content__top-panel">
+        <h2 class="page-title">Dashboard</h2>
+        <!-- RangePicker component -->
+        <div data-element="rangePicker"></div>
+      </div>
+      <div data-element="chartsRoot" class="dashboard__charts">
+        <!-- column-chart components -->
+        <div data-element="ordersChart" class="dashboard__chart_orders"></div>
+        <div data-element="salesChart" class="dashboard__chart_sales"></div>
+        <div data-element="customersChart" class="dashboard__chart_customers"></div>
+      </div>
+      <h3 class="block-title">Best sellers</h3>
+      <div data-element="sortableTable">
+        <!-- sortable-table component -->
+      </div>
+    </div>`;
+  }
 
-    const topPanel = document.createElement('div');
-    topPanel.className = 'content__top-panel';
 
-    const header2 = document.createElement('h2');
-    header2.className = 'page-title';
-    header2.innerText = 'Панель управления';
+  renderPage () {
+    Object.keys(this.components).forEach(component => {
+      const root = this.subElements[component];
+      const { element } = this.components[component];
 
-    const charts = document.createElement('div');
-    charts.className = 'dashboard__charts';
-
-    const header3 = document.createElement('h3');
-    header3.className = 'block-title';
-    header3.innerText = 'Лидеры продаж';
-
-    topPanel.append(header2);
-    topPanel.append(this.renderRangePicker());
-
-    charts.append(...this.renderCharts());
-
-    wrapper.append(topPanel);
-    wrapper.append(charts);
-    wrapper.append(header3);
-    wrapper.append(this.renderTable());
-    
-    return wrapper;
+      root.append(element);
+    });
   }
 
   async render () {
     try {
       const wrapper = document.createElement('div');
 
-      wrapper.append(await this.renderDashboard());
+      wrapper.innerHTML = this.template;
 
-      const element = wrapper.firstElementChild;
+      this.element = wrapper.firstElementChild;
+      this.subElements = this.getSubElements(this.element);
 
-      this.element = element;
+      this.initComponents();
+      this.renderPage();
 
       this.subElements.rangePicker.addEventListener('date-select', this.updateRange);
 
       return this.element;
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     }
+  }
+
+  getSubElements (element) {
+    const elements = element.querySelectorAll('[data-element]');
+
+    return [...elements].reduce((accum, subElement) => {
+      accum[subElement.dataset.element] = subElement;
+
+      return accum;
+    }, {});
   }
 
   updateRange = async (event) => {
     const { from, to } = event.detail;
-    const { id, order } = this.sortableTable.sorted;
       
-    this.sortableTable.data = [];
-    this.sortableTable.url = new URL(`api/dashboard/bestsellers?from=${from.toISOString()}&to=${to.toISOString()}`, BACKEND_URL);
-    const data = await this.sortableTable.loadData(id, order, 0, 30);
-    this.sortableTable.update(data);
+    const url = new URL('api/dashboard/bestsellers', BACKEND_URL);
 
-    this.ordersChart.loadData(from, to);
-    this.salesChart.loadData(from, to);
-    this.customersChart.loadData(from, to);
+    url.searchParams.set(from, from.toISOString());
+    url.searchParams.set(to, to.toISOString());
+    url.searchParams.set('_start', '1');
+    url.searchParams.set('_end', '30');
+    url.searchParams.set('_sort', 'title');
+    url.searchParams.set('_order', 'asc');
+
+    const data = await fetchJson(url);
+    this.components.sortableTable.update(data);
+
+    this.components.ordersChart.loadData(from, to);
+    this.components.salesChart.loadData(from, to);
+    this.components.customersChart.loadData(from, to);
   }
 
   remove () {
